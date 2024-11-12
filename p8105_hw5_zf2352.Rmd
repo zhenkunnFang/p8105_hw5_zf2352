@@ -1,0 +1,42 @@
+---
+title: "p8105_hw5_zf2352"
+author: "Zhenkun Fang"
+date: "2024-11-11"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE)
+
+set.seed(1)
+```
+
+# Problem 1
+
+```{r}
+duplicated_birthday = function(n) {
+  
+  birthdays = sample(1:365, n, replace = TRUE)
+  
+  return(length(birthdays) != length(unique(birthdays)))
+}
+
+duplicated_birthday(25)
+```
+
+```{r}
+group_size = 2:50
+probabilities = numeric(length(group_size))
+simulations = 10000
+
+for (i in seq_along(group_size)) {
+  n = group_size[i]
+  duplicates = replicate(simulations, duplicated_birthday(n))
+  probabilities[i] = mean(duplicates)
+}
+
+results <- data.frame(GroupSize = group_size, Probability = probabilities)
+print(results)
+```
+
