@@ -7,6 +7,7 @@ output: github_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(broom)
 knitr::opts_chunk$set(echo = TRUE)
 
 set.seed(123)
@@ -49,4 +50,61 @@ plot(group_size, probabilities, type = "o", col = "blue",
 The plot shows that as the group size increases from 2 to around 23, the probability of at least two people sharing a birthday increases rapidly. At a group size of approximately 23, the probability exceeds 0.5, meaning that there's a greater than 50% chance that at least two people will share a birthday. The plot shows a steady increase in probability up to around group size 40, after which the probability seems to plateau near 1.
 
 # Problem 2
+
+```{r}
+n = 30
+sigma = 5
+alpha = 0.05
+
+sim_mean_sd = function(n, mu, sigma) {
+  
+  sim_data = tibble(
+    x = rnorm(n, mean = mu, sd = sigma),
+  )
+  
+  t_test_result = t.test(sim_data$x, mu = 0)
+  tidy_result = tidy(t_test_result)
+  
+  sim_data |> 
+    summarize(
+      mu_hat = mean(x),
+      sigma_hat = sd(x),
+      p_value = tidy_result$p.value
+    )
+}
+```
+
+```{r}
+output = vector("list", 5000)
+
+for (i in 1:5000) {
+  output[[i]] = sim_mean_sd(n, mu = 0, sigma)
+}
+
+sim_results_0 = bind_rows(output)
+summary(sim_results_0)
+```
+
+```{r}
+mu_values = 1:6
+n_datasets = 5000
+power_results = data.frame(mu = mu_values, power = numeric(length(mu_values)))
+
+
+for (mu in mu_values) {
+  p_values = replicate(n_datasets, sim_mean_sd(n, mu, sigma))
+  power = mean(p_values < alpha)
+  power_results[power_results$mu == mu, "power"] = power
+}
+```
+
+```{r}
+ggplot(power_results, aes(x = mu, y = power)) +
+  geom_line(color = "blue") +
+  geom_point(color = "red") +
+  labs(title = "Power of the Test vs. Effect Size (Mu)",
+       x = "True Value of Mu",
+       y = "Power of the Test") +
+  theme_minimal()
+```
 
