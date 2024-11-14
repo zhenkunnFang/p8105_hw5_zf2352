@@ -9,7 +9,7 @@ output: github_document
 library(tidyverse)
 knitr::opts_chunk$set(echo = TRUE)
 
-set.seed(1)
+set.seed(123)
 ```
 
 # Problem 1
@@ -39,4 +39,14 @@ for (i in seq_along(group_size)) {
 results <- data.frame(GroupSize = group_size, Probability = probabilities)
 print(results)
 ```
+
+```{r}
+plot(group_size, probabilities, type = "o", col = "blue",
+     xlab = "Group Size", ylab = "Probability of Shared Birthday",
+     main = "Probability of at Least Two People Sharing a Birthday")
+```
+
+The plot shows that as the group size increases from 2 to around 23, the probability of at least two people sharing a birthday increases rapidly. At a group size of approximately 23, the probability exceeds 0.5, meaning that there's a greater than 50% chance that at least two people will share a birthday. The plot shows a steady increase in probability up to around group size 40, after which the probability seems to plateau near 1.
+
+# Problem 2
 
