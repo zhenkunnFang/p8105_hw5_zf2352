@@ -1,13 +1,18 @@
 ---
 title: "p8105_hw5_zf2352"
 author: "Zhenkun Fang"
-date: "2024-11-11"
+date: "2024-11-15"
 output: github_document
 ---
 
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(broom)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(purrr)
+
 knitr::opts_chunk$set(echo = TRUE)
 
 set.seed(123)
@@ -63,7 +68,7 @@ sim_mean_sd = function(n, mu, sigma) {
   )
   
   t_test_result = t.test(sim_data$x, mu = 0)
-  tidy_result = tidy(t_test_result)
+  tidy_result = broom::tidy(t_test_result)
   
   sim_data |> 
     summarize(
@@ -156,4 +161,69 @@ When the true value of $\mu$ range from 1 to 3, the sample average of $\hat{\mu}
 This is because when $mu$ is between 1 and 4, the effect size is small, and the power of the test is relatively low. This means that the test is not very effective at distinguishing between the null hypothesis ($\mu = 0$) and the true value ($\mu > 0$). When $\mu$ is larger (greater than 4), the power of the test is high, meaning most samples reject the null hypothesis. This reduces selection bias, and as a result, the average estimates for all samples and rejected samples become equal.
 
 # Problem 3
+
+```{r}
+homicide <- read_csv("homicide-data.csv")
+```
+
+This dataset has 52179 rows and 12 columns, which provides comprehensive information on homicide cases, including victim demographics (name, age, race, sex), location details, and case outcomes.
+
+```{r}
+homicide = homicide%>% 
+  mutate(
+    city_state = paste(city, state, sep = ", ")
+  )
+
+city_summary = homicide %>% 
+  group_by(city_state) %>% 
+  summarize(
+    total_homicides = n(),
+    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  )
+
+print(city_summary)
+```
+
+```{r}
+baltimore_data = homicide %>% 
+  filter(city_state == "Baltimore, MD")
+
+total_homicides <- nrow(baltimore_data)
+unsolved_homicides <- sum(baltimore_data$disposition %in% c("Closed without arrest", "Open/No arrest"))
+
+prop_test_result <- prop.test(unsolved_homicides, total_homicides)
+
+prop_test_summary <- broom::tidy(prop_test_result)
+
+prop_test_summary
+```
+
+```{r}
+city_proportions <- city_summary %>%
+  mutate(
+    tidy_results = map2(unsolved_homicides, total_homicides, ~ 
+                          prop.test(.x, .y) %>% tidy())
+  ) %>%
+  unnest(tidy_results) 
+
+print(city_proportions)
+```
+
+```{r}
+city_proportions = city_proportions %>%
+  arrange(desc(estimate)) %>%
+  mutate(city_state = factor(city_state, levels = city_state))
+
+ggplot(city_proportions, aes(x = city_state, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  coord_flip() +
+  labs(
+    title = "Proportion of Unsolved Homicides by City",
+    x = "City",
+    y = "Estimated Proportion of Unsolved Homicides"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 7))
+```
 
