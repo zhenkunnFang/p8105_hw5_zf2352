@@ -226,4 +226,3 @@ ggplot(city_proportions, aes(x = city_state, y = estimate)) +
   theme_minimal() +
   theme(axis.text.y = element_text(size = 7))
 ```
-
